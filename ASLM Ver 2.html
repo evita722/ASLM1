@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asesmen Sumatif IPS — Kelas VIII</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#1F3864;
+    --navy-deep:#132542;
+    --gold:#C9A24B;
+    --paper:#F7F5F0;
+    --ink:#1D2430;
+    --line:#D8DEE9;
+    --danger:#B3261E;
+    --ok:#1E7A46;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Georgia','Iowan Old Style',serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
+  }
+  .sans{font-family:'Helvetica Neue',Arial,sans-serif;}
+  ::selection{background:transparent;}
+  #app{max-width:900px;margin:0 auto;padding:24px 20px 80px;}
+
+  /* ===== TOP BAR ===== */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 22px;border-radius:0 0 10px 10px;
+    box-shadow:0 4px 14px rgba(19,37,66,.25);
+  }
+  .topbar .brand{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;letter-spacing:.06em;text-transform:uppercase;opacity:.85;}
+  .topbar .brand strong{display:block;font-family:Georgia,serif;font-size:17px;letter-spacing:0;text-transform:none;margin-top:2px;}
+  .timer{
+    font-family:'Helvetica Neue',Arial,sans-serif;
+    font-size:26px;font-weight:700;letter-spacing:.03em;
+    background:var(--navy-deep);padding:8px 16px;border-radius:8px;
+    border:1px solid rgba(255,255,255,.15);
+    min-width:110px;text-align:center;
+  }
+  .timer.warn{background:#5C2A22;color:#FFD9D0;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+  /* ===== SCREENS ===== */
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:32px;margin-top:22px;box-shadow:0 2px 10px rgba(31,56,100,.05);}
+
+  h1{font-size:26px;margin:0 0 6px;color:var(--navy);}
+  h2{font-size:19px;color:var(--navy);margin:0 0 14px;border-bottom:2px solid var(--gold);padding-bottom:8px;}
+  .sub{font-family:'Helvetica Neue',Arial,sans-serif;color:#5b6470;font-size:14px;margin-bottom:20px;}
+
+  label.field-label{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:700;color:var(--navy-deep);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+  input[type=text]{
+    width:100%;padding:11px 14px;font-size:16px;border:1.5px solid var(--line);border-radius:8px;
+    margin-bottom:18px;font-family:Georgia,serif;background:#fff;-webkit-user-select:text;user-select:text;
+  }
+  input[type=text]:focus{outline:none;border-color:var(--navy);}
+  input[type=text][readonly]{background:#F0F2F5;color:#5b6470;}
+
+  select.select-field{
+    width:100%;padding:11px 14px;font-size:16px;border:1.5px solid var(--line);border-radius:8px;
+    margin-bottom:18px;font-family:Georgia,serif;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%231F3864" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>') no-repeat right 14px center;
+    background-size:14px;appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    -webkit-user-select:text;user-select:text;cursor:pointer;
+  }
+  select.select-field:focus{outline:none;border-color:var(--navy);}
+
+  .rule-list{font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.75;color:#333;}
+  .rule-list li{margin-bottom:6px;}
+
+  .btn{
+    font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:15px;
+    padding:13px 26px;border-radius:8px;border:none;cursor:pointer;
+    background:var(--navy);color:#fff;letter-spacing:.02em;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(31,56,100,.3);}
+  .btn:active{transform:translateY(0);}
+  .btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn.gold{background:var(--gold);color:var(--navy-deep);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  .warn-banner{
+    background:#FBEDEB;border:1.5px solid var(--danger);color:#7A241C;
+    font-family:'Helvetica Neue',Arial,sans-serif;font-size:13.5px;
+    padding:12px 16px;border-radius:8px;margin-bottom:18px;display:none;
+  }
+  .warn-banner.show{display:block;}
+
+  /* ===== NAV GRID ===== */
+  .navgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:18px 0 24px;}
+  .navgrid button{
+    font-family:'Helvetica Neue',Arial,sans-serif;font-size:12.5px;font-weight:700;
+    height:34px;border-radius:6px;border:1.5px solid var(--line);background:#fff;color:#444;cursor:pointer;
+  }
+  .navgrid button.answered{background:#EAF1FB;border-color:var(--navy);color:var(--navy);}
+  .navgrid button.current{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  /* ===== QUESTION ===== */
+  .qmeta{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);font-weight:700;margin-bottom:10px;}
+  .qstem{font-size:18px;line-height:1.6;margin-bottom:20px;white-space:pre-line;}
+  .opt{
+    display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1.5px solid var(--line);
+    border-radius:9px;margin-bottom:10px;cursor:pointer;transition:background .12s, border-color .12s;
+  }
+  .opt:hover{background:#F5F8FC;}
+  .opt.checked{border-color:var(--navy);background:#EAF1FB;}
+  .opt input{margin-top:3px;pointer-events:none;}
+  .opt .lab{font-weight:700;color:var(--navy);min-width:20px;}
+  .opt .txt{font-size:16px;line-height:1.5;}
+
+  .qnav{display:flex;justify-content:space-between;margin-top:26px;gap:10px;}
+
+  .footer-note{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#8a93a1;text-align:center;margin-top:26px;}
+
+  /* ===== RESULT ===== */
+  .score-hero{text-align:center;padding:18px 0 8px;}
+  .score-num{font-size:64px;font-weight:700;color:var(--navy);font-family:'Helvetica Neue',Arial,sans-serif;}
+  .score-label{font-family:'Helvetica Neue',Arial,sans-serif;color:#5b6470;font-size:14px;text-transform:uppercase;letter-spacing:.06em;}
+  .predikat{display:inline-block;margin-top:10px;padding:6px 18px;border-radius:20px;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;}
+
+  table.recap{width:100%;border-collapse:collapse;margin-top:20px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13.5px;}
+  table.recap th{background:var(--navy);color:#fff;padding:8px;text-align:left;}
+  table.recap td{padding:7px 8px;border-bottom:1px solid var(--line);}
+  table.recap tr:nth-child(even){background:#FAFBFD;}
+
+  .lockscreen{
+    position:fixed;inset:0;background:rgba(19,37,66,.96);color:#fff;z-index:999;
+    display:none;align-items:center;justify-content:center;text-align:center;padding:30px;
+  }
+  .lockscreen.show{display:flex;flex-direction:column;}
+  .lockscreen h2{color:#fff;border:none;}
+
+  @media(max-width:600px){
+    .navgrid{grid-template-columns:repeat(5,1fr);}
+    .score-num{font-size:48px;}
+    .card{padding:20px;}
+  }
+
+  /* ===== WATERMARK & FOCUS PROTECTION ===== */
+  #watermarkLayer{
+    position:fixed;inset:0;z-index:40;pointer-events:none;
+    display:flex;flex-wrap:wrap;align-content:flex-start;
+    overflow:hidden;opacity:.13;transform:rotate(-28deg) scale(1.4);
+    font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;color:#132542;
+    line-height:2.6;letter-spacing:.03em;user-select:none;
+  }
+  #watermarkLayer span{white-space:nowrap;margin:0 22px;}
+
+  #app.exam-blurred #screen-exam{
+    filter:blur(22px) brightness(.85);
+    transition:filter .15s ease;
+    pointer-events:none;
+  }
+  #app #screen-exam{ transition:filter .15s ease; }
+
+  .blur-overlay{
+    position:fixed;inset:0;z-index:45;background:rgba(19,37,66,.9);color:#fff;
+    display:none;align-items:center;justify-content:center;text-align:center;padding:30px;
+    font-family:'Helvetica Neue',Arial,sans-serif;
+  }
+  .blur-overlay.show{display:flex;flex-direction:column;}
+  .blur-overlay h3{margin:0 0 8px;font-size:18px;}
+  .blur-overlay p{margin:0;font-size:13.5px;opacity:.85;max-width:380px;}
+</style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="lockscreen" class="lockscreen">
+  <h2>⚠ Mode Layar Penuh Diperlukan</h2>
+  <p class="sans" style="max-width:420px;">Asesmen ini harus dikerjakan dalam mode layar penuh. Klik tombol di bawah untuk melanjutkan pengerjaan.</p>
+  <button class="btn gold" style="margin-top:14px;" onclick="reenterFullscreen()">Kembali ke Layar Penuh</button>
+</div>
+
+<div id="blurOverlay" class="blur-overlay">
+  <h3>⚠ Jendela Tidak Aktif</h3>
+  <p>Layar soal disamarkan karena kamu berpindah ke jendela/aplikasi lain. Klik di sini untuk kembali mengerjakan.</p>
+</div>
+
+<div id="watermarkLayer"></div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="brand">Asesmen Sumatif Lingkup Materi<strong id="topbarTitle">IPS — Kelas VIII</strong></div>
+    <div id="timerBox" class="timer">40:00</div>
+  </div>
+
+  <!-- ===== SCREEN 0: START ===== -->
+  <div class="screen active" id="screen-start">
+    <div class="card">
+      <h1>Asesmen Sumatif Lingkup Materi</h1>
+      <div class="sub">Ilmu Pengetahuan Sosial · Kelas VIII · Kebutuhan, Kelangkaan, Ketenagakerjaan &amp; Investasi</div>
+
+      <label class="field-label">Kelas</label>
+      <select id="inputKelas" class="select-field" onchange="onKelasChange()">
+        <option value="">— Pilih kelas kamu —</option>
+      </select>
+
+      <label class="field-label">Nama Peserta Didik</label>
+      <select id="inputNama" class="select-field" disabled>
+        <option value="">— Pilih kelas terlebih dahulu —</option>
+      </select>
+
+      <h2 style="margin-top:26px;">Petunjuk Pengerjaan</h2>
+      <ul class="rule-list">
+        <li>Urutan soal dan urutan pilihan jawaban akan <strong>diacak secara otomatis</strong> untuk setiap peserta, sehingga urutan soal setiap siswa dapat berbeda-beda.</li>
+        <li>Asesmen terdiri atas <strong>40 butir soal</strong> (32 Pilihan Ganda, 8 Pilihan Ganda Kompleks) dengan alokasi waktu <strong>40 menit</strong>.</li>
+        <li>Setelah menekan tombol "Mulai Asesmen", layar akan otomatis masuk ke mode <strong>layar penuh (fullscreen)</strong> dan tidak boleh keluar sampai asesmen selesai.</li>
+        <li>Sistem akan <strong>mendeteksi jika kamu berpindah tab, aplikasi lain, atau menekan tombol tangkapan layar (screenshot)</strong>. Pelanggaran akan dicatat pada laporan hasil.</li>
+        <li>Layar akan otomatis <strong>tersamar (blur)</strong> saat jendela tidak aktif, dan sebuah <strong>watermark berisi nama, kelas, serta waktu</strong> akan tampil transparan di seluruh layar selama pengerjaan sebagai penanda keaslian dan pelacakan.</li>
+        <li><strong>Salin, tempel, dan klik kanan dinonaktifkan</strong> selama asesmen berlangsung.</li>
+        <li>Waktu pengerjaan berjalan mundur secara otomatis dan asesmen akan <strong>terkirim otomatis</strong> saat waktu habis.</li>
+        <li>Setelah dikumpulkan, hasil (nilai, jawaban, dan skor) akan <strong>otomatis terkirim ke spreadsheet guru</strong> jika perangkat terhubung internet. Kamu tetap dapat mengunduh salinan hasil dalam format Excel.</li>
+        <li>Jawaban dapat diubah kapan pun sebelum waktu habis dengan berpindah antarnomor menggunakan panel navigasi soal.</li>
+      </ul>
+
+      <div class="warn-banner" id="startWarn"></div>
+      <button class="btn" id="btnStart" onclick="startExam()">Mulai Asesmen &amp; Masuk Layar Penuh →</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 1: EXAM ===== -->
+  <div class="screen" id="screen-exam">
+    <div class="warn-banner" id="examWarn"></div>
+    <div class="card">
+      <div class="navgrid" id="navGrid"></div>
+      <div class="qmeta" id="qMeta"></div>
+      <div class="qstem" id="qStem"></div>
+      <div id="qOptions"></div>
+      <div class="qnav">
+        <button class="btn secondary" id="btnPrev" onclick="goPrev()">← Sebelumnya</button>
+        <button class="btn secondary" id="btnNext" onclick="goNext()">Berikutnya →</button>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:24px;">
+      <button class="btn gold" onclick="confirmSubmit()">Kumpulkan Jawaban</button>
+    </div>
+    <div class="footer-note">Terjawab: <span id="answeredCount">0</span> / 40</div>
+  </div>
+
+  <!-- ===== SCREEN 2: RESULT ===== -->
+  <div class="screen" id="screen-result">
+    <div class="card">
+      <div class="score-hero">
+        <div class="score-label">Nilai Akhir</div>
+        <div class="score-num" id="finalScore">0</div>
+        <div id="predikatBox"></div>
+      </div>
+      <div class="sub" style="text-align:center;">
+        Skor Perolehan: <strong id="rawScore">0</strong> / 48 &nbsp;•&nbsp; Benar Penuh: <span id="fullCorrect">0</span> soal &nbsp;•&nbsp; Pindah Tab: <span id="tabSwitchCount">0</span> &nbsp;•&nbsp; Dugaan Screenshot: <span id="screenshotCount">0</span>
+      </div>
+      <div style="text-align:center;margin-top:20px;">
+        <button class="btn" onclick="downloadExcel()">⬇ Unduh Hasil (Excel)</button>
+      </div>
+      <div class="sub" id="sheetStatus" style="text-align:center;margin-top:12px;"></div>
+      <table class="recap" id="recapTable"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [{"no":1,"materi":"Pengertian Kebutuhan","indikator":"Menjelaskan pengertian kebutuhan melalui ilustrasi kehidupan sehari-hari","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Setiap malam, Andra tidur cukup delapan jam agar tubuhnya bugar untuk bersekolah esok hari. Jika waktu tidurnya kurang, ia akan mengantuk dan sulit berkonsentrasi sepanjang hari. Kondisi tersebut menunjukkan bahwa tidur cukup bagi Andra termasuk ....","opsi":["Kebiasaan yang bisa ditinggalkan kapan saja","Kebutuhan yang harus dipenuhi agar dapat beraktivitas dengan baik","Keinginan yang sifatnya sementara","Kegiatan hiburan semata"],"kunci":"B"},{"no":2,"materi":"Pengertian Kebutuhan","indikator":"Membedakan kebutuhan dan keinginan berdasarkan kasus","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Perhatikan pernyataan berikut.\n(1) Rian ingin membeli konsol permainan terbaru.\n(2) Rian membutuhkan alat tulis untuk mengikuti ujian besok.\nPerbedaan mendasar antara kebutuhan dan keinginan pada ilustrasi tersebut adalah ....","opsi":["Kebutuhan bersifat mendesak dan wajib dipenuhi, sedangkan keinginan bersifat pelengkap dan dapat ditunda","Keinginan selalu lebih murah harganya daripada kebutuhan","Kebutuhan hanya berlaku bagi pelajar, sedangkan keinginan berlaku bagi semua orang","Kebutuhan dan keinginan sebenarnya memiliki makna yang sama"],"kunci":"A"},{"no":3,"materi":"Pengertian Kebutuhan","indikator":"Menganalisis faktor penyebab bertambahnya kebutuhan manusia","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Keluarga Bu Retno tinggal di kota besar dengan biaya hidup yang terus meningkat setiap tahun. Meskipun pendapatan keluarga relatif tetap, kebutuhan mereka terhadap pendidikan anak, layanan kesehatan, dan tempat tinggal terus bertambah. Faktor yang paling memengaruhi bertambahnya kebutuhan keluarga tersebut adalah ....","opsi":["Perkembangan zaman dan pertumbuhan anggota keluarga","Banyaknya tetangga yang berpindah rumah","Jenis kendaraan yang dimiliki keluarga","Warna cat rumah yang dipilih keluarga"],"kunci":"A"},{"no":4,"materi":"Jenis-Jenis Kebutuhan","indikator":"Mengidentifikasi kebutuhan menurut tingkat intensitas (primer)","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Nasi, air bersih, dan tempat tinggal adalah kebutuhan yang harus dipenuhi lebih dahulu karena berkaitan langsung dengan kelangsungan hidup manusia. Kebutuhan tersebut tergolong kebutuhan ....","opsi":["Tersier","Sekunder","Primer","Sosial"],"kunci":"C"},{"no":5,"materi":"Jenis-Jenis Kebutuhan","indikator":"Mengidentifikasi kebutuhan menurut sifatnya (rohani)","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Setelah lelah bekerja seharian, Bu Yanti meluangkan waktu untuk berdoa dan mendengarkan pengajian agar batinnya lebih tenang. Kegiatan tersebut merupakan pemenuhan kebutuhan ....","opsi":["Jasmani","Rohani","Sekunder","Kolektif"],"kunci":"B"},{"no":6,"materi":"Jenis-Jenis Kebutuhan","indikator":"Menganalisis kebutuhan menurut waktu pemenuhannya (tidak terduga)","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Warga yang tinggal di lereng gunung berapi menyiapkan tas siaga berisi masker dan obat-obatan meskipun belum ada tanda-tanda erupsi akan terjadi dalam waktu dekat. Tindakan tersebut merupakan upaya memenuhi kebutuhan ....","opsi":["Sekarang","Masa akan datang","Tidak terduga","Primer"],"kunci":"C"},{"no":7,"materi":"Jenis-Jenis Kebutuhan","indikator":"Menganalisis kebutuhan menurut subjek yang membutuhkan (kolektif)","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Warga kampung bergotong royong membangun pos ronda yang dapat digunakan secara bergiliran oleh seluruh warga untuk menjaga keamanan lingkungan. Pembangunan pos ronda tersebut termasuk pemenuhan kebutuhan ....","opsi":["Individu","Kolektif","Tersier","Rohani"],"kunci":"B"},{"no":8,"materi":"Jenis-Jenis Kebutuhan","indikator":"Mengevaluasi beberapa pernyataan tentang jenis-jenis kebutuhan","level":"C4","tipe":"PGK","sukar":"Sedang","stem":"Perhatikan pernyataan-pernyataan berikut. Pilihlah pernyataan yang BENAR mengenai jenis-jenis kebutuhan manusia! (Jawaban benar lebih dari satu)","opsi":["Obat-obatan bagi orang yang sedang sakit termasuk kebutuhan primer","Jas hujan yang dibeli saat musim hujan tiba termasuk kebutuhan sekarang","Kebutuhan rohani hanya dapat dipenuhi dengan cara membeli barang mewah","Tabungan dana kecelakaan termasuk kebutuhan tidak terduga","Kebutuhan kolektif hanya dapat dipenuhi oleh satu orang tertentu"],"kunci":["A","B","D"]},{"no":9,"materi":"Jenis-Jenis Kebutuhan","indikator":"Menganalisis kasus penggolongan kebutuhan berdasarkan waktu","level":"C4","tipe":"PG","sukar":"Sukar","stem":"Keluarga peternak sapi perah mengalokasikan hasil penjualan susu untuk: (1) membeli pakan ternak untuk kebutuhan esok pagi; (2) menabung biaya pendidikan anak tahun depan; (3) membeli obat cacing karena beberapa sapi mendadak sakit; (4) menyumbang perbaikan jalan desa yang dipakai seluruh warga. Pasangan yang tepat antara kegiatan dan jenis kebutuhan berdasarkan waktu serta subjek adalah ....","opsi":["(1) sekarang, (2) akan datang, (3) tidak terduga, (4) kolektif","(1) akan datang, (2) sekarang, (3) tidak terduga, (4) individu","(1) sekarang, (2) sekarang, (3) akan datang, (4) tidak terduga","(1) tidak terduga, (2) akan datang, (3) sekarang, (4) kolektif"],"kunci":"A"},{"no":10,"materi":"Alat Pemuas Kebutuhan","indikator":"Membedakan benda bebas dan benda ekonomi","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Sinar matahari dapat dinikmati semua orang secara gratis untuk menjemur pakaian, sedangkan mesin pengering pakaian harus dibeli dengan sejumlah uang di toko elektronik. Berdasarkan ilustrasi tersebut, sinar matahari termasuk benda ....","opsi":["Ekonomi","Bebas","Substitusi","Komplementer"],"kunci":"B"},{"no":11,"materi":"Alat Pemuas Kebutuhan","indikator":"Menganalisis hubungan benda substitusi dalam kasus perubahan harga","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Ketika harga cabai merah melonjak tinggi, banyak pedagang warung makan beralih menggunakan cabai rawit sebagai bahan sambal pengganti. Hubungan antara cabai merah dan cabai rawit pada kasus tersebut adalah ....","opsi":["Komplementer","Substitusi","Bebas","Ekonomi"],"kunci":"B"},{"no":12,"materi":"Alat Pemuas Kebutuhan","indikator":"Mengidentifikasi kedudukan benda menurut proses pembuatannya","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Getah karet yang disadap dari pohon diolah menjadi lembaran karet mentah, kemudian diolah pabrik menjadi ban kendaraan siap jual. Getah karet dalam rangkaian proses tersebut berkedudukan sebagai ....","opsi":["Barang jadi","Barang setengah jadi","Bahan mentah","Barang komplementer"],"kunci":"C"},{"no":13,"materi":"Alat Pemuas Kebutuhan","indikator":"Menganalisis penggolongan benda menurut tujuan penggunaannya","level":"C4","tipe":"PGK","sukar":"Sedang","stem":"Pak Rudi membeli sepeda motor untuk mengantar pesanan makanan pelanggannya sebagai kurir daring, sedangkan Bu Lina membeli sepeda motor yang sama hanya untuk mengantar anaknya sekolah setiap hari. Pernyataan yang tepat terkait tujuan penggunaan barang tersebut adalah .... (Jawaban benar lebih dari satu)","opsi":["Sepeda motor Pak Rudi termasuk barang produksi","Sepeda motor Bu Lina termasuk barang produksi","Sepeda motor Bu Lina termasuk barang konsumsi","Jenis barang ditentukan oleh tujuan penggunaannya, bukan oleh bentuk fisik barang","Sepeda motor selalu termasuk barang produksi di mana pun digunakan"],"kunci":["A","C","D"]},{"no":14,"materi":"Alat Pemuas Kebutuhan","indikator":"Menganalisis kasus gabungan penggolongan alat pemuas kebutuhan","level":"C4","tipe":"PG","sukar":"Sukar","stem":"Sebuah keluarga pembudidaya ikan memanfaatkan air sungai secara gratis untuk mengisi kolam, membeli pakan ikan pabrikan di toko, menggunakan mesin aerator yang hanya berfungsi jika dialiri listrik dari PLN, serta mengolah ikan segar menjadi ikan asin sebelum dijual. Berdasarkan ilustrasi tersebut, pakan ikan dan listrik termasuk contoh benda ....","opsi":["Bebas dan substitusi","Ekonomi dan komplementer","Ekonomi dan substitusi","Bebas dan komplementer"],"kunci":"B"},{"no":15,"materi":"Kelangkaan","indikator":"Menjelaskan pengertian kelangkaan dalam ilmu ekonomi","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Kelangkaan dalam ilmu ekonomi terjadi ketika ....","opsi":["Toko menutup sementara karena sedang renovasi","Jumlah kebutuhan manusia tidak terbatas, sedangkan sumber daya untuk memenuhinya terbatas","Harga suatu barang turun karena kelebihan pasokan","Pemerintah menaikkan pajak suatu jenis barang"],"kunci":"B"},{"no":16,"materi":"Kelangkaan","indikator":"Menganalisis faktor penyebab kelangkaan sumber daya","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Setiap tahun, sejumlah kota besar mengalami kemacetan parah karena jumlah kendaraan pribadi terus bertambah, sementara luas jalan tidak banyak berubah. Faktor utama penyebab kelangkaan ruang jalan pada kasus tersebut adalah ....","opsi":["Keterbatasan infrastruktur dan pertambahan jumlah kendaraan","Rendahnya harga bahan bakar minyak","Banyaknya bengkel motor di pinggir jalan","Kebijakan pemerintah tentang pajak kendaraan"],"kunci":"A"},{"no":17,"materi":"Kelangkaan","indikator":"Membedakan penyebab kelangkaan akibat SDA dan SDM","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Suatu daerah pesisir memiliki potensi ikan yang melimpah, tetapi hasil tangkapan nelayan tetap rendah karena banyak nelayan belum menguasai teknik penangkapan modern dan minim akses alat tangkap yang memadai. Penyebab kelangkaan hasil laut pada kasus tersebut lebih disebabkan oleh keterbatasan ....","opsi":["Sumber daya alam","Sumber daya manusia dan teknologi","Modal usaha semata","Lembaga koperasi nelayan"],"kunci":"B"},{"no":18,"materi":"Kelangkaan","indikator":"Menganalisis faktor-faktor penyebab kelangkaan pada kasus nyata","level":"C4","tipe":"PGK","sukar":"Sukar","stem":"Menjelang tahun ajaran baru, harga seragam dan perlengkapan sekolah di sejumlah daerah melonjak dan stoknya terbatas di toko-toko. Berdasarkan kasus tersebut, faktor-faktor yang dapat menyebabkan kelangkaan perlengkapan sekolah tersebut adalah .... (Jawaban benar lebih dari satu)","opsi":["Meningkatnya permintaan masyarakat secara serentak menjelang tahun ajaran baru","Terbatasnya kapasitas produksi konveksi lokal dalam waktu singkat","Menurunnya jumlah siswa yang mendaftar sekolah","Terganggunya pasokan bahan baku kain dari pemasok","Meningkatnya jumlah sumber daya alam secara tiba-tiba"],"kunci":["A","B","D"]},{"no":19,"materi":"Kelangkaan","indikator":"Menentukan solusi atas kasus kelangkaan sumber daya di suatu wilayah","level":"C4","tipe":"PG","sukar":"Sukar","stem":"Sebuah desa di pegunungan memiliki hasil sayur-mayur yang melimpah, tetapi warganya kesulitan memperoleh ikan segar karena letaknya jauh dari laut maupun sungai besar. Untuk mengatasi kelangkaan tersebut, tindakan paling tepat yang dapat dilakukan warga desa adalah ....","opsi":["Membiarkan kondisi tersebut karena dianggap sudah menjadi kondisi alam yang tidak dapat diubah","Melakukan pertukaran atau perdagangan hasil sayur dengan ikan dari desa nelayan terdekat","Berhenti mengonsumsi ikan untuk seterusnya","Menaikkan harga sayur setinggi-tingginya kepada sesama warga desa"],"kunci":"B"},{"no":20,"materi":"Skala Prioritas Kebutuhan","indikator":"Menjelaskan pengertian skala prioritas kebutuhan","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Daftar kebutuhan yang disusun berdasarkan tingkat kepentingan, mulai dari yang paling mendesak hingga yang dapat ditunda pemenuhannya, disebut ....","opsi":["Laporan keuangan","Skala prioritas","Daftar belanja","Buku kas"],"kunci":"B"},{"no":21,"materi":"Skala Prioritas Kebutuhan","indikator":"Menganalisis faktor yang memengaruhi penyusunan skala prioritas","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Dua orang karyawan dengan besar gaji berbeda memiliki daftar kebutuhan bulanan yang berbeda pula, meskipun tinggal di kompleks perumahan yang sama. Faktor yang paling memengaruhi perbedaan skala prioritas kebutuhan antarindividu tersebut adalah ....","opsi":["Jenis olahraga favorit masing-masing","Tingkat pendapatan, status sosial, dan lingkungan tempat tinggal","Jumlah pengikut media sosial","Merek ponsel yang digunakan"],"kunci":"B"},{"no":22,"materi":"Skala Prioritas Kebutuhan","indikator":"Menerapkan prinsip skala prioritas pada kasus anggaran keluarga","level":"C4","tipe":"PG","sukar":"Sedang","stem":"Pendapatan Bu Sinta bulan ini berkurang karena tokonya sepi pembeli. Ia harus memilih antara membayar tagihan listrik yang menunggak, membeli sepatu baru yang sedang tren, atau menambah modal dagangan yang sudah menipis. Berdasarkan prinsip skala prioritas, urutan yang paling tepat didahulukan oleh Bu Sinta adalah ....","opsi":["Sepatu baru, tagihan listrik, modal dagangan","Tagihan listrik, modal dagangan, sepatu baru","Modal dagangan, sepatu baru, tagihan listrik","Sepatu baru, modal dagangan, tagihan listrik"],"kunci":"B"},{"no":23,"materi":"Skala Prioritas Kebutuhan","indikator":"Mengevaluasi penyusunan skala prioritas pada kasus rumah tangga","level":"C4","tipe":"PGK","sukar":"Sukar","stem":"Pak Dodi adalah seorang buruh harian dengan penghasilan tidak menentu. Minggu ini anaknya harus membayar biaya ujian sekolah, sementara atap rumahnya bocor cukup parah saat hujan turun. Pernyataan yang tepat mengenai penyusunan skala prioritas Pak Dodi adalah .... (Jawaban benar lebih dari satu)","opsi":["Biaya ujian sekolah anak sebaiknya didahulukan karena berkaitan dengan pendidikan yang mendesak","Perbaikan atap yang bocor parah juga penting karena menyangkut keselamatan dan kenyamanan keluarga","Pak Dodi sebaiknya menunda semua kebutuhan tersebut demi membeli televisi baru","Penyusunan prioritas perlu mempertimbangkan tingkat kemendesakan dan risiko yang ditimbulkan","Skala prioritas tidak perlu disusun karena semua kebutuhan dianggap sama pentingnya"],"kunci":["A","B","D"]},{"no":24,"materi":"Skala Prioritas Kebutuhan","indikator":"Mengevaluasi dampak keputusan yang tidak sesuai skala prioritas","level":"C5","tipe":"PG","sukar":"Sukar","stem":"Seorang siswa memiliki uang saku terbatas dan harus memilih antara membeli kacamata baca pengganti yang sudah rusak atau membeli aksesori gawai kesukaannya. Jika siswa tersebut memilih membeli aksesori gawai sehingga tidak memiliki cukup uang untuk kacamata baca, dampak yang paling mungkin terjadi adalah ....","opsi":["Prestasi belajarnya akan meningkat pesat","Kegiatan belajarnya dapat terganggu karena kesulitan membaca dengan jelas","Ia akan menjadi lebih populer di sekolah","Tidak ada dampak apa pun bagi kegiatan belajarnya"],"kunci":"B"},{"no":25,"materi":"Jenis-Jenis Tenaga Kerja","indikator":"Mengidentifikasi tenaga kerja terdidik","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Seorang apoteker harus menempuh pendidikan farmasi selama bertahun-tahun sebelum dapat bekerja secara resmi di apotek. Apoteker tersebut termasuk contoh tenaga kerja ....","opsi":["Terdidik","Terlatih","Tidak terdidik","Tidak terlatih"],"kunci":"A"},{"no":26,"materi":"Jenis-Jenis Tenaga Kerja","indikator":"Membedakan tenaga kerja terlatih berdasarkan sumber keahliannya","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Seorang juru masak andal memperoleh keahliannya dari kursus memasak singkat dan pengalaman bertahun-tahun bekerja di dapur restoran, bukan dari pendidikan formal tata boga. Juru masak tersebut termasuk tenaga kerja ....","opsi":["Terdidik","Terlatih","Tidak terdidik dan tidak terlatih","Pengangguran terselubung"],"kunci":"B"},{"no":27,"materi":"Jenis-Jenis Tenaga Kerja","indikator":"Mengurutkan kualifikasi tenaga kerja berdasarkan contoh profesi","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Perhatikan daftar pekerjaan berikut.\n(1) Dosen\n(2) Teknisi AC bersertifikat\n(3) Kuli panggul di pelabuhan\nUrutan yang tepat menggambarkan kualifikasi tenaga kerja terdidik, terlatih, dan tidak terdidik secara berurutan adalah ....","opsi":["(1), (2), (3)","(2), (1), (3)","(3), (2), (1)","(1), (3), (2)"],"kunci":"A"},{"no":28,"materi":"Jenis-Jenis Tenaga Kerja","indikator":"Mengevaluasi upaya peningkatan kualitas tenaga kerja","level":"C4","tipe":"PGK","sukar":"Sedang","stem":"Sebuah kabupaten berencana meningkatkan daya saing tenaga kerja lokal agar dapat terserap oleh industri baru yang akan dibangun. Pernyataan yang tepat mengenai upaya peningkatan kualitas tenaga kerja adalah .... (Jawaban benar lebih dari satu)","opsi":["Mendirikan Balai Latihan Kerja (BLK) untuk pelatihan vokasi","Memberi akses pendidikan menengah kejuruan yang terjangkau","Membiarkan calon tenaga kerja belajar sendiri tanpa pendampingan","Menjalin kerja sama sekolah dengan dunia industri untuk praktik kerja","Mengurangi jumlah pelatihan kerja demi menghemat anggaran"],"kunci":["A","B","D"]},{"no":29,"materi":"Jenis-Jenis Tenaga Kerja","indikator":"Menganalisis kesenjangan kualitas tenaga kerja dengan kebutuhan industri","level":"C4","tipe":"PG","sukar":"Sukar","stem":"Sebuah perusahaan rintisan (startup) teknologi kesulitan merekrut pegawai yang menguasai pemrograman berbasis kecerdasan buatan, meskipun banyak pelamar kerja mendaftar setiap bulan. Permasalahan tersebut menunjukkan bahwa tenaga kerja yang melamar mengalami ....","opsi":["Kelebihan keterampilan dibandingkan kebutuhan perusahaan","Kesenjangan antara keterampilan yang dimiliki dan kebutuhan dunia kerja masa kini","Kelebihan pendidikan formal dibandingkan kebutuhan perusahaan","Kondisi yang tidak berkaitan dengan kualitas tenaga kerja"],"kunci":"B"},{"no":30,"materi":"Pengangguran","indikator":"Mengidentifikasi pengangguran friksional dari kasus mencari kerja","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Setelah mengundurkan diri dari kantor lamanya, Sinta membutuhkan waktu satu setengah bulan untuk menemukan pekerjaan baru yang sesuai dengan bidang keahliannya. Kondisi Sinta selama masa mencari kerja tersebut disebut pengangguran ....","opsi":["Struktural","Friksional","Musiman","Siklikal"],"kunci":"B"},{"no":31,"materi":"Pengangguran","indikator":"Menganalisis pengangguran struktural akibat perubahan teknologi","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Banyak kasir minimarket kehilangan pekerjaan setelah perusahaan menggantinya dengan mesin pembayaran mandiri (self-checkout) berbasis otomatisasi. Jenis pengangguran yang dialami para kasir tersebut adalah pengangguran ....","opsi":["Friksional","Struktural","Musiman","Terbuka"],"kunci":"B"},{"no":32,"materi":"Pengangguran","indikator":"Mengidentifikasi pengangguran musiman pada sektor pertanian","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Pemandu wisata pantai tidak memiliki banyak pekerjaan selama musim penghujan karena jumlah wisatawan yang datang menurun drastis dibandingkan musim kemarau. Kondisi tersebut termasuk pengangguran ....","opsi":["Musiman","Struktural","Siklikal","Terselubung"],"kunci":"A"},{"no":33,"materi":"Pengangguran","indikator":"Membedakan karakteristik pengangguran siklikal dan terselubung","level":"C3","tipe":"PGK","sukar":"Sedang","stem":"Perhatikan pernyataan-pernyataan berikut mengenai jenis pengangguran. Pilihlah pernyataan yang BENAR! (Jawaban benar lebih dari satu)","opsi":["Pengangguran siklikal terjadi akibat naik turunnya kondisi perekonomian secara umum","Pengangguran terselubung terjadi ketika seseorang bekerja tetapi tidak sesuai kemampuan atau jam kerjanya kurang optimal","Pengangguran terbuka adalah orang yang bekerja penuh waktu dengan produktivitas tinggi","Krisis ekonomi global dapat memicu meningkatnya pengangguran siklikal di suatu negara","Pengangguran terselubung sama artinya dengan pengangguran terbuka"],"kunci":["A","B","D"]},{"no":34,"materi":"Pengangguran","indikator":"Menganalisis kasus untuk menentukan jenis pengangguran terselubung","level":"C4","tipe":"PG","sukar":"Sukar","stem":"Seorang lulusan teknik informatika bekerja sebagai pengemudi ojek daring karena belum mendapatkan pekerjaan sesuai bidang keahliannya, sehingga kemampuannya di bidang teknologi tidak digunakan secara optimal. Kondisi tersebut termasuk pengangguran ....","opsi":["Terbuka","Terselubung","Musiman","Friksional"],"kunci":"B"},{"no":35,"materi":"Dampak Pengangguran","indikator":"Menganalisis dampak pengangguran terhadap bidang ekonomi","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Tingginya angka pengangguran di suatu kota menyebabkan daya beli masyarakat menurun sehingga banyak pusat perbelanjaan sepi pengunjung dan pendapatan pajak daerah pun ikut menurun. Ilustrasi tersebut menunjukkan dampak pengangguran terhadap bidang ....","opsi":["Ekonomi","Budaya","Politik","Lingkungan"],"kunci":"A"},{"no":36,"materi":"Dampak Pengangguran","indikator":"Menganalisis dampak pengangguran terhadap bidang sosial","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Di sejumlah kawasan dengan tingkat pengangguran tinggi, kasus tawuran dan gangguan ketertiban umum cenderung meningkat karena banyak generasi muda tidak memiliki kegiatan produktif. Dampak pengangguran pada kasus tersebut termasuk dampak di bidang ....","opsi":["Ekonomi","Sosial","Teknologi","Investasi"],"kunci":"B"},{"no":37,"materi":"Dampak Pengangguran","indikator":"Mengevaluasi dampak dan upaya mengatasi pengangguran pada kasus nyata","level":"C4","tipe":"PGK","sukar":"Sukar","stem":"Pemerintah suatu kabupaten berupaya menekan angka pengangguran yang meningkat akibat tutupnya beberapa pabrik garmen. Pernyataan yang tepat mengenai dampak dan upaya mengatasi pengangguran tersebut adalah .... (Jawaban benar lebih dari satu)","opsi":["Pengangguran yang tinggi berpotensi meningkatkan angka kemiskinan di kabupaten tersebut","Program pelatihan wirausaha dapat membantu eks-karyawan pabrik membuka usaha mandiri","Membiarkan pabrik tutup tanpa ada program lanjutan merupakan langkah terbaik","Menarik investor baru untuk membuka pabrik pengganti dapat menyerap tenaga kerja yang terdampak","Pengangguran tidak memengaruhi kondisi sosial masyarakat sekitar"],"kunci":["A","B","D"]},{"no":38,"materi":"Jenis-Jenis Investasi","indikator":"Mengidentifikasi investasi riil dari kasus kepemilikan aset","level":"C2","tipe":"PG","sukar":"Mudah","stem":"Bu Hana membeli beberapa keping logam mulia (emas) sebagai simpanan jangka panjang untuk kebutuhan mendesak di masa depan. Investasi yang dilakukan Bu Hana termasuk jenis investasi ....","opsi":["Finansial","Riil","Saham","Obligasi"],"kunci":"B"},{"no":39,"materi":"Jenis-Jenis Investasi","indikator":"Membandingkan tingkat risiko dan keuntungan instrumen investasi","level":"C3","tipe":"PG","sukar":"Sedang","stem":"Pak Broto menyimpan sebagian uangnya dalam bentuk obligasi pemerintah karena menginginkan imbal hasil relatif stabil dengan risiko rendah, sedangkan rekan kerjanya memilih membeli saham perusahaan teknologi karena berharap keuntungan lebih besar meski risikonya lebih tinggi. Perbandingan yang tepat antara kedua instrumen investasi tersebut adalah ....","opsi":["Obligasi berisiko tinggi, sedangkan saham berisiko rendah","Obligasi dan saham memiliki tingkat risiko dan potensi keuntungan yang sama","Obligasi cenderung berisiko rendah dengan imbal hasil relatif stabil, sedangkan saham berisiko lebih tinggi dengan potensi keuntungan lebih besar","Saham tidak memiliki risiko sama sekali bagi pemiliknya"],"kunci":"C"},{"no":40,"materi":"Jenis-Jenis Investasi","indikator":"Mengevaluasi karakteristik berbagai jenis investasi pada kasus keluarga","level":"C4","tipe":"PGK","sukar":"Sukar","stem":"Seorang pelajar SMP mendapat penjelasan dari kakaknya tentang beberapa pilihan investasi: membeli tanah kavling, membeli saham perusahaan consumer goods, menyimpan reksadana pasar uang, dan membeli obligasi ritel negara. Pernyataan yang tepat mengenai jenis-jenis investasi tersebut adalah .... (Jawaban benar lebih dari satu)","opsi":["Tanah kavling termasuk contoh investasi riil yang nilainya cenderung naik dalam jangka panjang","Saham dan reksadana termasuk contoh investasi finansial","Semua jenis investasi memiliki tingkat risiko yang sama besar","Obligasi ritel negara umumnya dianggap relatif lebih aman dibandingkan saham","Investasi sebaiknya dipilih tanpa mempertimbangkan tujuan dan jangka waktu"],"kunci":["A","B","D"]}];
+const STUDENTS = [{"no": 1, "nama": "ADILLA NAHDA RAFANDYA", "kelas": "VIII A"}, {"no": 2, "nama": "AINA ZULFA ZAHIDA", "kelas": "VIII A"}, {"no": 3, "nama": "ALVARO PUTRA RAMADHANI", "kelas": "VIII A"}, {"no": 4, "nama": "ALYA PUTRI MAHARANI", "kelas": "VIII A"}, {"no": 5, "nama": "ANDRA NURDIYANSYAH", "kelas": "VIII A"}, {"no": 6, "nama": "AQILA FAFIDHATUN NA'IMAH", "kelas": "VIII A"}, {"no": 7, "nama": "ASYIFA KHANSA SYAFRINA", "kelas": "VIII A"}, {"no": 8, "nama": "CAHYOAJI PUTRA RAMADHAN", "kelas": "VIII A"}, {"no": 9, "nama": "DENY ARGA YUDHI SAPUTRA", "kelas": "VIII A"}, {"no": 10, "nama": "FAJAR IBNU SETIAWAN", "kelas": "VIII A"}, {"no": 11, "nama": "FARHAN MAULANA", "kelas": "VIII A"}, {"no": 12, "nama": "FAUZAN AZKA PURNAMA", "kelas": "VIII A"}, {"no": 13, "nama": "FERDIANICA NAEEMA PRIZILIA", "kelas": "VIII A"}, {"no": 14, "nama": "HAFIZ SAPUTRA", "kelas": "VIII A"}, {"no": 15, "nama": "HANIF NUR RAHMAN", "kelas": "VIII A"}, {"no": 16, "nama": "KEVIN ANDRIANO", "kelas": "VIII A"}, {"no": 17, "nama": "KRISHNA TRIZTAN AL HAFIZ", "kelas": "VIII A"}, {"no": 18, "nama": "LAUFRENDI ANANTA PRAMUDYA", "kelas": "VIII A"}, {"no": 19, "nama": "LIA ALIFAH SALSABILA", "kelas": "VIII A"}, {"no": 20, "nama": "MARSYA CAHYA ASYIFA", "kelas": "VIII A"}, {"no": 21, "nama": "MASZNAH NURUL FADZOLILLAH", "kelas": "VIII A"}, {"no": 22, "nama": "MAURA OLIVIA", "kelas": "VIII A"}, {"no": 23, "nama": "MELANI DWI SAPUTRI", "kelas": "VIII A"}, {"no": 24, "nama": "MUHAMMAD ZUHRI KHOIRUL ANAM", "kelas": "VIII A"}, {"no": 25, "nama": "NEO SURYA PUTRA", "kelas": "VIII A"}, {"no": 26, "nama": "OKTAVIAN DWI SAPUTRA", "kelas": "VIII A"}, {"no": 27, "nama": "RAFAIZ JANUARTA", "kelas": "VIII A"}, {"no": 28, "nama": "RAYHAN PRATISTA ATMAJA", "kelas": "VIII A"}, {"no": 29, "nama": "SYAHDAN RAFKA HIMAWAN", "kelas": "VIII A"}, {"no": 30, "nama": "SYIFA RAHADATUL AISY", "kelas": "VIII A"}, {"no": 31, "nama": "VRIZKA AYU RAKHMAWATI", "kelas": "VIII A"}, {"no": 32, "nama": "ZYLVIA CESSA SETYAWATI", "kelas": "VIII A"}, {"no": 1, "nama": "ABID FADHIL SHAB'HI", "kelas": "VIII B"}, {"no": 2, "nama": "AIYA KHAMILATUN SHALIKAH", "kelas": "VIII B"}, {"no": 3, "nama": "ALFINA INDRIYANI", "kelas": "VIII B"}, {"no": 4, "nama": "ALVIOLA NINDI PUTRI CITIWAN", "kelas": "VIII B"}, {"no": 5, "nama": "ANGGER RESTU OKTAVIAN", "kelas": "VIII B"}, {"no": 6, "nama": "ANWAR IHSANUDIN", "kelas": "VIII B"}, {"no": 7, "nama": "AZKA RIVALDO", "kelas": "VIII B"}, {"no": 8, "nama": "CINTYA ADILIA ISNAINI", "kelas": "VIII B"}, {"no": 9, "nama": "DAVIN NINO IRAWAN", "kelas": "VIII B"}, {"no": 10, "nama": "DESTA TYO PRADANA", "kelas": "VIII B"}, {"no": 11, "nama": "DHINI NURHAYATI", "kelas": "VIII B"}, {"no": 12, "nama": "FADIL NOER FAHREZI", "kelas": "VIII B"}, {"no": 13, "nama": "FILIA BADZLIN MUTRYAS", "kelas": "VIII B"}, {"no": 14, "nama": "HILMI ABIYU SYAKIB", "kelas": "VIII B"}, {"no": 15, "nama": "IBAM PRANAJA SATRIA WIDNI", "kelas": "VIII B"}, {"no": 16, "nama": "LOCITA CAROLA CAHYA DEWI", "kelas": "VIII B"}, {"no": 17, "nama": "MAULIA NUZILA PUTRI", "kelas": "VIII B"}, {"no": 18, "nama": "MUHAMAD YUDA PRATAMA", "kelas": "VIII B"}, {"no": 19, "nama": "MUHAMMAD NIZAM AL FURQON", "kelas": "VIII B"}, {"no": 20, "nama": "NADIRA MEYZA RAHMADANI", "kelas": "VIII B"}, {"no": 21, "nama": "NAFIS AQIL ATHALLAH", "kelas": "VIII B"}, {"no": 22, "nama": "OKTAVIA PRIMA DIANTI", "kelas": "VIII B"}, {"no": 23, "nama": "OLIVIA MUTIARA ZULFA AZAHRA", "kelas": "VIII B"}, {"no": 24, "nama": "PUTRI PRICILIA PICHESYA", "kelas": "VIII B"}, {"no": 25, "nama": "QHEREL AQUEENESA SHERIN", "kelas": "VIII B"}, {"no": 26, "nama": "RAFFAEL CAHYO NUGROHO", "kelas": "VIII B"}, {"no": 27, "nama": "REZA YUSUF SHAPUTRA", "kelas": "VIII B"}, {"no": 28, "nama": "RIDO GAFIN FIRMANSYAH", "kelas": "VIII B"}, {"no": 29, "nama": "SALSABILLA YASMIN AZAHRA", "kelas": "VIII B"}, {"no": 30, "nama": "VIOLINA PUTRI RAMADHANI", "kelas": "VIII B"}, {"no": 31, "nama": "YUSNITA KHOIRUNNISA", "kelas": "VIII B"}, {"no": 32, "nama": "ZIYAN SOFWAN MUHAMMAD", "kelas": "VIII B"}, {"no": 1, "nama": "ABDAN ARIFKY PUTRA", "kelas": "VIII C"}, {"no": 2, "nama": "ALVARO IVANDER RIZQULLAH", "kelas": "VIII C"}, {"no": 3, "nama": "ALVIAN PERATAMA", "kelas": "VIII C"}, {"no": 4, "nama": "ANDIRA HASNA PUTRI PANDU", "kelas": "VIII C"}, {"no": 5, "nama": "ANDRIANO VELYS WICAKSONO", "kelas": "VIII C"}, {"no": 6, "nama": "ANWAR YAKI FIRMANSYAH", "kelas": "VIII C"}, {"no": 7, "nama": "ARGA SAPUTRA NUGRAHA", "kelas": "VIII C"}, {"no": 8, "nama": "ARKA REHVAN DYO RAFARIS", "kelas": "VIII C"}, {"no": 9, "nama": "AULIA VITRIANA ANGGRAINI", "kelas": "VIII C"}, {"no": 10, "nama": "AZALEA QUEENESYA", "kelas": "VIII C"}, {"no": 11, "nama": "AZKA RAFII SAMSUNA", "kelas": "VIII C"}, {"no": 12, "nama": "CLARA NUR AGUSTIN", "kelas": "VIII C"}, {"no": 13, "nama": "DIO VANO ERIKO", "kelas": "VIII C"}, {"no": 14, "nama": "DWI MEYRINDA SARI", "kelas": "VIII C"}, {"no": 15, "nama": "ENDAH JIYANTI", "kelas": "VIII C"}, {"no": 16, "nama": "FARENDRA KHOIRULIZAM", "kelas": "VIII C"}, {"no": 17, "nama": "FIKA ANINDHITA", "kelas": "VIII C"}, {"no": 18, "nama": "LISTYA LUTHFIANA", "kelas": "VIII C"}, {"no": 19, "nama": "MARWA ALUNA HASMI", "kelas": "VIII C"}, {"no": 20, "nama": "MAURA ANGGRAINI", "kelas": "VIII C"}, {"no": 21, "nama": "NAZWA MUTYA SELFIANA", "kelas": "VIII C"}, {"no": 22, "nama": "NISRINA ZAHRA NURAVRIYANI", "kelas": "VIII C"}, {"no": 23, "nama": "NUR WAHYU PUTRA PRATAMA", "kelas": "VIII C"}, {"no": 24, "nama": "RIZKY WAHYU NUGROHO", "kelas": "VIII C"}, {"no": 25, "nama": "SASKIA ARMELITA", "kelas": "VIII C"}, {"no": 26, "nama": "TERE DESTIA CIPAGANTI", "kelas": "VIII C"}, {"no": 27, "nama": "VIOLA CLARA PUTRI", "kelas": "VIII C"}, {"no": 28, "nama": "WULAN PELITA NURANI", "kelas": "VIII C"}, {"no": 29, "nama": "ZELVINA KINGKIN KAYLA RUSTOFA", "kelas": "VIII C"}, {"no": 30, "nama": "ZEVITA ARIN ARISTA", "kelas": "VIII C"}, {"no": 31, "nama": "ZIAN EGY REYVANO", "kelas": "VIII C"}, {"no": 32, "nama": "ZIDANE WIDHA PUTRA HANAVI", "kelas": "VIII C"}, {"no": 1, "nama": "ABDAN NU'MAN WAFIE", "kelas": "VIII D"}, {"no": 2, "nama": "ADELIA NUR AVELIANI", "kelas": "VIII D"}, {"no": 3, "nama": "AFFIKA ZUHAIROTUL FITRIA NURJANAH", "kelas": "VIII D"}, {"no": 4, "nama": "ALINDA PUTRI RAHMAWATI", "kelas": "VIII D"}, {"no": 5, "nama": "AQILA PUTRI AGUSTINE", "kelas": "VIII D"}, {"no": 6, "nama": "ARYA ALIEF MAULANA", "kelas": "VIII D"}, {"no": 7, "nama": "ASIFA ENJELIA FEBI AYU PUTRI", "kelas": "VIII D"}, {"no": 8, "nama": "AVIEF KHAIRULLAH", "kelas": "VIII D"}, {"no": 9, "nama": "AZAHRA NIKMATUN NA'IM", "kelas": "VIII D"}, {"no": 10, "nama": "BYANKA EKA RAMADHANI", "kelas": "VIII D"}, {"no": 11, "nama": "CAHYO HADI NUGROHO", "kelas": "VIII D"}, {"no": 12, "nama": "CHELSEA SYAFARANA KAMILA", "kelas": "VIII D"}, {"no": 13, "nama": "DAMAR ARYO PRIAMBODO", "kelas": "VIII D"}, {"no": 14, "nama": "FAISHAL FAKHRI RAMADHAN", "kelas": "VIII D"}, {"no": 15, "nama": "FANIA ASTIKASARI", "kelas": "VIII D"}, {"no": 16, "nama": "INDAH AYU OKTAVIA", "kelas": "VIII D"}, {"no": 17, "nama": "KEYLAN ARDIYANA PUTRA", "kelas": "VIII D"}, {"no": 18, "nama": "KHENZO SEVANO HERYANA", "kelas": "VIII D"}, {"no": 19, "nama": "LATIFFA KIRANIA AZ ZAHRA", "kelas": "VIII D"}, {"no": 20, "nama": "MARCELA DWI PUSPITA", "kelas": "VIII D"}, {"no": 21, "nama": "MAULIDA MIKHA AYUNDA", "kelas": "VIII D"}, {"no": 22, "nama": "MUHAMMAD HAFIZ RIZKIA MADA", "kelas": "VIII D"}, {"no": 23, "nama": "NAKLA NAFI ALFAKHRI", "kelas": "VIII D"}, {"no": 24, "nama": "NALA ZAKIYYATUS SYIFA", "kelas": "VIII D"}, {"no": 25, "nama": "ORLIN KHAERANI", "kelas": "VIII D"}, {"no": 26, "nama": "PAUNDRA ALFARENO RIZKI RESTIYAN", "kelas": "VIII D"}, {"no": 27, "nama": "RASYA MUHAMMAD ATHAYA", "kelas": "VIII D"}, {"no": 28, "nama": "RIFQIA FADHILAH UMAR", "kelas": "VIII D"}, {"no": 29, "nama": "SALMA AINURRIDHO", "kelas": "VIII D"}, {"no": 30, "nama": "SYAQILA ARTA MEIVA", "kelas": "VIII D"}, {"no": 31, "nama": "THIYAN EZA SAPUTRA", "kelas": "VIII D"}, {"no": 1, "nama": "ADZAKIATUN NISA", "kelas": "VIII E"}, {"no": 2, "nama": "AGAM FRESA PRATAMA", "kelas": "VIII E"}, {"no": 3, "nama": "AHAKA ZUANDA", "kelas": "VIII E"}, {"no": 4, "nama": "AHMAD TAUFIKURROHMAN", "kelas": "VIII E"}, {"no": 5, "nama": "ALISHA KHAIRA WILDA", "kelas": "VIII E"}, {"no": 6, "nama": "ALITA STIFANI", "kelas": "VIII E"}, {"no": 7, "nama": "AMANDA DIVA LESTARI", "kelas": "VIII E"}, {"no": 8, "nama": "ANGGI SAPUTRI", "kelas": "VIII E"}, {"no": 9, "nama": "ARYA RADITYA ARVANDY", "kelas": "VIII E"}, {"no": 10, "nama": "AZ ZAHRA QHAULA SAISABILA", "kelas": "VIII E"}, {"no": 11, "nama": "AZKA GUNAWAN AHYAN", "kelas": "VIII E"}, {"no": 12, "nama": "BELVA CANTIKA", "kelas": "VIII E"}, {"no": 13, "nama": "BRILIAN AL FIND RAMADHAN", "kelas": "VIII E"}, {"no": 14, "nama": "DAFINO NASIKHUL AMIN", "kelas": "VIII E"}, {"no": 15, "nama": "DESTA PUTRI TAMA", "kelas": "VIII E"}, {"no": 16, "nama": "DEVA KHOIRUL SAPUTRA", "kelas": "VIII E"}, {"no": 17, "nama": "DINO CAHYA MAULANA", "kelas": "VIII E"}, {"no": 18, "nama": "ELFANO", "kelas": "VIII E"}, {"no": 19, "nama": "EVA HIDAYATI", "kelas": "VIII E"}, {"no": 20, "nama": "GARNETA MANDIRA MOZZA KHAN", "kelas": "VIII E"}, {"no": 21, "nama": "IZZA ADELLIA PUTRI", "kelas": "VIII E"}, {"no": 22, "nama": "KEVANO RADITYA ARBINTA", "kelas": "VIII E"}, {"no": 23, "nama": "KHANSA ANNORA AL MAYYASAH", "kelas": "VIII E"}, {"no": 24, "nama": "KHUSNA LATIFATUNNISA", "kelas": "VIII E"}, {"no": 25, "nama": "LINTANG RAYSHA AZZAHRA", "kelas": "VIII E"}, {"no": 26, "nama": "MAHYA PUTRI RAFIDAH", "kelas": "VIII E"}, {"no": 27, "nama": "MOYA ADELINE SEVEN", "kelas": "VIII E"}, {"no": 28, "nama": "MUHAMMAD MIZANUDDIN", "kelas": "VIII E"}, {"no": 29, "nama": "RENO DESTA PRATAMA", "kelas": "VIII E"}, {"no": 30, "nama": "SHEILA AULIA RAHMA", "kelas": "VIII E"}, {"no": 31, "nama": "SIGIT HANDOKO", "kelas": "VIII E"}, {"no": 32, "nama": "ZAHRANA ASSYFAUL KHUSNA", "kelas": "VIII E"}, {"no": 1, "nama": "AGAM ABDILLAH PRATAMA", "kelas": "VIII F"}, {"no": 2, "nama": "AIMEE REZKIKA", "kelas": "VIII F"}, {"no": 3, "nama": "ALIKHA ARSYAKAYLA", "kelas": "VIII F"}, {"no": 4, "nama": "ANGGI PRASSTYA", "kelas": "VIII F"}, {"no": 5, "nama": "ARIMBI DWI LAILATUL RAMADANI", "kelas": "VIII F"}, {"no": 6, "nama": "ATHAYA MAULANA GHUFRAN", "kelas": "VIII F"}, {"no": 7, "nama": "AYOUMI AZWANI DANA", "kelas": "VIII F"}, {"no": 8, "nama": "ENI SULISTYOWATI", "kelas": "VIII F"}, {"no": 9, "nama": "FERANDA WIDYA PUTRI", "kelas": "VIII F"}, {"no": 10, "nama": "HANIF FAJAR PRATAMA", "kelas": "VIII F"}, {"no": 11, "nama": "HASNA RADYN MAULIDHA", "kelas": "VIII F"}, {"no": 12, "nama": "KELVIN KASHIU ROHMAN", "kelas": "VIII F"}, {"no": 13, "nama": "KHESYA SAFHA AZALIA", "kelas": "VIII F"}, {"no": 14, "nama": "KINANTHI SEKAR PEMBAYUN", "kelas": "VIII F"}, {"no": 15, "nama": "LIA DWI ARYANI", "kelas": "VIII F"}, {"no": 16, "nama": "MUHAMMAD MALKHAN BAIHAQI", "kelas": "VIII F"}, {"no": 17, "nama": "MUHAMMAD RIFAUL FAHRI", "kelas": "VIII F"}, {"no": 18, "nama": "NAUFAN DZAKI MUSYAFFA'", "kelas": "VIII F"}, {"no": 19, "nama": "RICARDO PRASTYO HERYANA", "kelas": "VIII F"}, {"no": 20, "nama": "SAYYID DZAKY AFFAN", "kelas": "VIII F"}, {"no": 21, "nama": "SYAZWANIYAS RUDIAN FABREGAS", "kelas": "VIII F"}, {"no": 22, "nama": "SYIFA DHESTIARA", "kelas": "VIII F"}, {"no": 23, "nama": "THOHIBUL ZALFA AZIEZIE", "kelas": "VIII F"}, {"no": 24, "nama": "TSABITAH NAAILA HASNA SAWITRI", "kelas": "VIII F"}, {"no": 25, "nama": "VAREZA AMELIA RISKI", "kelas": "VIII F"}, {"no": 26, "nama": "VITA DWI NURLAISA", "kelas": "VIII F"}, {"no": 27, "nama": "ZAHRANIA TAMIF SHILA NINGSIH", "kelas": "VIII F"}, {"no": 28, "nama": "ZAHWA AQIELA NAFIS", "kelas": "VIII F"}, {"no": 29, "nama": "ZASKIA INDAH ANA TASYA", "kelas": "VIII F"}, {"no": 30, "nama": "ZENNA ALMEIRA", "kelas": "VIII F"}, {"no": 31, "nama": "ZULIAR MUHAMMAD NUR", "kelas": "VIII F"}, {"no": 32, "nama": "ZUNATA FERDI PRATAMA", "kelas": "VIII F"}];
+const HURUF = ["A","B","C","D","E"];
+const DURATION_SECONDS = 40*60;
+
+// ======================================================================
+// KONEKSI KE GOOGLE SHEETS (opsional)
+// Tempel URL Web App Google Apps Script kamu di bawah ini (lihat panduan
+// "Cara Menghubungkan ke Google Sheets" yang disertakan terpisah).
+// Kosongkan ("") jika tidak ingin mengirim hasil otomatis ke spreadsheet
+// — tombol "Unduh Hasil (Excel)" tetap berfungsi seperti biasa.
+// ======================================================================
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyB9ICHuPKVQnbHMjqu_lSBRqSsFENhLA_1kpuYCF2W5-zom7oOK05mkevlYIM-uRKm/exec";
+
+let state = {
+  nama:"", kelas:"",
+  current:0,
+  answers:{}, // no -> array of selected letters (or single letter for PG stored as [letter])
+  tabSwitchCount:0,
+  screenshotAttemptCount:0,
+  timeLeft:DURATION_SECONDS,
+  timerHandle:null,
+  submitted:false,
+  fullscreenExitCount:0
+};
+
+// ---------- SECURITY: copy/paste/context-menu block ----------
+["copy","cut","paste"].forEach(evt=>{
+  document.addEventListener(evt, e=>{ e.preventDefault(); return false; });
+});
+document.addEventListener("selectstart", e=>{
+  if(e.target && (e.target.tagName==="INPUT")) return true;
+  e.preventDefault();
+});
+document.addEventListener("keydown", e=>{
+  if((e.ctrlKey||e.metaKey) && ["c","v","x","u","s","p"].includes(e.key.toLowerCase())){
+    e.preventDefault();
+  }
+  if(e.key === "F12") e.preventDefault();
+});
+
+// ---------- DETEKSI PERCOBAAN TANGKAPAN LAYAR (best-effort) ----------
+// CATATAN JUJUR: browser TIDAK memiliki kemampuan untuk benar-benar mencegah
+// tangkapan layar (screenshot), karena proses ini dikendalikan oleh sistem
+// operasi perangkat, bukan oleh halaman web. Yang dilakukan di sini hanyalah
+// (1) mendeteksi kombinasi tombol screenshot yang umum lalu mencatatnya
+// sebagai dugaan pelanggaran, dan (2) menyamarkan (blur) serta membubuhkan
+// watermark pada layar agar hasil tangkapan layar tidak dapat dibaca dan
+// tetap dapat dilacak identitas pelakunya.
+function flagScreenshotAttempt(){
+  if(!examStarted() || state.submitted) return;
+  state.screenshotAttemptCount++;
+  showExamWarn(`⚠ Terdeteksi dugaan percobaan tangkapan layar (ke-${state.screenshotAttemptCount}). Aktivitas ini tercatat dalam laporan hasil.`);
+}
+document.addEventListener("keyup", e=>{
+  if(e.key === "PrintScreen" || e.code === "PrintScreen") flagScreenshotAttempt();
+});
+document.addEventListener("keydown", e=>{
+  // Mac: Cmd+Shift+3 / 4 / 5 (screenshot & screen recording)
+  if(e.metaKey && e.shiftKey && ["3","4","5"].includes(e.key)) flagScreenshotAttempt();
+  // Windows: Win+Shift+S (Snipping Tool) terdeteksi lewat kombinasi shiftKey+metaKey pada beberapa browser
+  if(e.metaKey && e.shiftKey && e.key.toLowerCase()==="s") flagScreenshotAttempt();
+});
+
+// ---------- WATERMARK DINAMIS ----------
+function buildWatermark(){
+  const layer = document.getElementById("watermarkLayer");
+  const label = `${state.nama || "PESERTA"} • ${state.kelas || ""}`;
+  const now = new Date();
+  const ts = now.toLocaleString("id-ID", {dateStyle:"short", timeStyle:"medium"});
+  let html = "";
+  for(let i=0;i<60;i++){ html += `<span>${label} • ${ts}</span>`; }
+  layer.innerHTML = html;
+}
+let watermarkHandle = null;
+function startWatermark(){
+  buildWatermark();
+  watermarkHandle = setInterval(buildWatermark, 1000);
+}
+
+// ---------- BLUR OTOMATIS SAAT JENDELA TIDAK FOKUS ----------
+window.addEventListener("blur", ()=>{
+  if(examStarted() && !state.submitted){
+    document.getElementById("app").classList.add("exam-blurred");
+    document.getElementById("blurOverlay").classList.add("show");
+  }
+});
+window.addEventListener("focus", ()=>{
+  document.getElementById("app").classList.remove("exam-blurred");
+  document.getElementById("blurOverlay").classList.remove("show");
+});
+document.getElementById("blurOverlay").addEventListener("click", ()=>{
+  document.getElementById("app").classList.remove("exam-blurred");
+  document.getElementById("blurOverlay").classList.remove("show");
+  window.focus();
+});
+
+// ---------- TAB SWITCH DETECTION ----------
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden && state.current !== null && !state.submitted && examStarted()){
+    state.tabSwitchCount++;
+    showExamWarn(`⚠ Terdeteksi perpindahan tab/aplikasi (ke-${state.tabSwitchCount}). Aktivitas ini tercatat dalam laporan hasil.`);
+  }
+});
+function examStarted(){
+  return document.getElementById("screen-exam").classList.contains("active");
+}
+
+// ---------- FULLSCREEN LOCK ----------
+function requestFS(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(req) return req.call(el);
+  return Promise.resolve();
+}
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+["fullscreenchange","webkitfullscreenchange","msfullscreenchange"].forEach(evt=>{
+  document.addEventListener(evt, ()=>{
+    if(!isFullscreen() && examStarted() && !state.submitted){
+      state.fullscreenExitCount++;
+      document.getElementById("lockscreen").classList.add("show");
+    } else {
+      document.getElementById("lockscreen").classList.remove("show");
+    }
+  });
+});
+function reenterFullscreen(){
+  requestFS().then(()=>{ document.getElementById("lockscreen").classList.remove("show"); });
+}
+
+// ---------- ISI DROPDOWN KELAS & NAMA ----------
+function populateStudentDropdown(){
+  const kelasSel = document.getElementById("inputKelas");
+  const kelasList = [...new Set(STUDENTS.map(s=>s.kelas))].sort();
+  kelasList.forEach(k=>{
+    const opt = document.createElement("option");
+    opt.value = k; opt.textContent = k;
+    kelasSel.appendChild(opt);
+  });
+}
+function onKelasChange(){
+  const kelas = document.getElementById("inputKelas").value;
+  const namaSel = document.getElementById("inputNama");
+  namaSel.innerHTML = "";
+  if(!kelas){
+    namaSel.disabled = true;
+    namaSel.innerHTML = '<option value="">— Pilih kelas terlebih dahulu —</option>';
+    return;
+  }
+  namaSel.disabled = false;
+  namaSel.innerHTML = '<option value="">— Pilih nama kamu —</option>';
+  STUDENTS.filter(s=>s.kelas===kelas).forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.nama;
+    opt.textContent = `${s.no}. ${s.nama}`;
+    namaSel.appendChild(opt);
+  });
+}
+document.addEventListener("DOMContentLoaded", populateStudentDropdown);
+
+// ---------- PENGACAKAN SOAL & PILIHAN JAWABAN ----------
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+// Membuat set soal khusus untuk sesi ini: urutan soal diacak dan urutan
+// pilihan jawaban pada tiap soal juga diacak (kunci jawaban dihitung ulang
+// mengikuti posisi barunya), tanpa mengubah data soal induk (QUESTIONS).
+function buildSessionQuestions(){
+  const shuffled = QUESTIONS.map(q=>{
+    const order = q.opsi.map((_,i)=>i);
+    shuffleArray(order);
+    const kunciSet = Array.isArray(q.kunci) ? q.kunci : [q.kunci];
+    const newOpsi = order.map(i=>q.opsi[i]);
+    const newKunci = [];
+    order.forEach((origIdx, newIdx)=>{
+      if(kunciSet.includes(HURUF[origIdx])) newKunci.push(HURUF[newIdx]);
+    });
+    newKunci.sort();
+    return Object.assign({}, q, { opsi:newOpsi, kunci: q.tipe==="PGK" ? newKunci : newKunci[0] });
+  });
+  shuffleArray(shuffled);
+  return shuffled;
+}
+
+// ---------- START ----------
+function startExam(){
+  const nama = document.getElementById("inputNama").value.trim();
+  const kelas = document.getElementById("inputKelas").value.trim();
+  const warn = document.getElementById("startWarn");
+  if(!nama || !kelas){
+    warn.textContent = "Silakan pilih kelas dan nama kamu terlebih dahulu dari daftar sebelum memulai asesmen.";
+    warn.classList.add("show");
+    return;
+  }
+  warn.classList.remove("show");
+  state.nama = nama; state.kelas = kelas;
+
+  requestFS().finally(()=>{
+    document.getElementById("screen-start").classList.remove("active");
+    document.getElementById("screen-exam").classList.add("active");
+    document.getElementById("topbarTitle").textContent = nama + " — " + kelas;
+    state.sessionQuestions = buildSessionQuestions();
+    buildNavGrid();
+    renderQuestion();
+    startTimer();
+    startWatermark();
+  });
+}
+
+// ---------- TIMER ----------
+function startTimer(){
+  updateTimerDisplay();
+  state.timerHandle = setInterval(()=>{
+    state.timeLeft--;
+    updateTimerDisplay();
+    if(state.timeLeft <= 0){
+      clearInterval(state.timerHandle);
+      submitExam(true);
+    }
+  },1000);
+}
+function updateTimerDisplay(){
+  const m = Math.floor(state.timeLeft/60).toString().padStart(2,"0");
+  const s = Math.floor(state.timeLeft%60).toString().padStart(2,"0");
+  const box = document.getElementById("timerBox");
+  box.textContent = `${m}:${s}`;
+  box.classList.toggle("warn", state.timeLeft <= 300);
+}
+
+// ---------- NAV GRID ----------
+function buildNavGrid(){
+  const grid = document.getElementById("navGrid");
+  grid.innerHTML = "";
+  state.sessionQuestions.forEach((q,i)=>{
+    const b = document.createElement("button");
+    b.textContent = i+1;
+    b.onclick = ()=>{ state.current=i; renderQuestion(); };
+    b.id = "navbtn-"+i;
+    grid.appendChild(b);
+  });
+}
+function refreshNavGrid(){
+  state.sessionQuestions.forEach((q,i)=>{
+    const b = document.getElementById("navbtn-"+i);
+    b.classList.toggle("current", i===state.current);
+    b.classList.toggle("answered", !!(state.answers[q.no] && state.answers[q.no].length));
+  });
+  const answered = Object.values(state.answers).filter(a=>a && a.length).length;
+  document.getElementById("answeredCount").textContent = answered;
+}
+
+// ---------- RENDER QUESTION ----------
+function renderQuestion(){
+  const q = state.sessionQuestions[state.current];
+  document.getElementById("qMeta").textContent = `Soal ${state.current+1} dari ${state.sessionQuestions.length} • ${q.tipe==="PGK" ? "Pilihan Ganda Kompleks (jawaban benar lebih dari satu)" : "Pilihan Ganda"} • Tingkat: ${q.sukar}`;
+  document.getElementById("qStem").textContent = q.stem;
+  const wrap = document.getElementById("qOptions");
+  wrap.innerHTML = "";
+  const selected = state.answers[q.no] || [];
+  q.opsi.forEach((op,i)=>{
+    const letter = HURUF[i];
+    const row = document.createElement("div");
+    row.className = "opt" + (selected.includes(letter) ? " checked":"");
+    row.innerHTML = `<input type="${q.tipe==="PGK"?"checkbox":"radio"}" ${selected.includes(letter)?"checked":""}><span class="lab">${letter}.</span><span class="txt">${op}</span>`;
+    row.onclick = ()=> toggleAnswer(q, letter);
+    wrap.appendChild(row);
+  });
+  document.getElementById("btnPrev").disabled = state.current===0;
+  document.getElementById("btnNext").disabled = state.current===state.sessionQuestions.length-1;
+  refreshNavGrid();
+}
+function toggleAnswer(q, letter){
+  let cur = state.answers[q.no] || [];
+  if(q.tipe==="PGK"){
+    if(cur.includes(letter)) cur = cur.filter(l=>l!==letter);
+    else cur = [...cur, letter];
+  } else {
+    cur = [letter];
+  }
+  state.answers[q.no] = cur;
+  renderQuestion();
+}
+function goNext(){ if(state.current<state.sessionQuestions.length-1){ state.current++; renderQuestion(); } }
+function goPrev(){ if(state.current>0){ state.current--; renderQuestion(); } }
+
+function showExamWarn(msg){
+  const w = document.getElementById("examWarn");
+  w.textContent = msg;
+  w.classList.add("show");
+  setTimeout(()=>w.classList.remove("show"), 6000);
+}
+
+// ---------- SUBMIT / SCORING ----------
+function confirmSubmit(){
+  const answered = Object.values(state.answers).filter(a=>a && a.length).length;
+  const total = state.sessionQuestions.length;
+  const msg = answered < total
+    ? `Masih ada ${total-answered} soal yang belum dijawab. Yakin ingin mengumpulkan jawaban sekarang?`
+    : "Yakin ingin mengumpulkan jawaban sekarang? Jawaban tidak dapat diubah lagi setelah dikumpulkan.";
+  if(confirm(msg)) submitExam(false);
+}
+
+function scoreQuestion(q){
+  const chosen = (state.answers[q.no] || []).slice().sort();
+  const kunci = (Array.isArray(q.kunci) ? q.kunci.slice() : [q.kunci]).sort();
+  if(q.tipe === "PG"){
+    const correct = chosen.length===1 && chosen[0]===kunci[0];
+    return { skor: correct?1:0, maks:1, benar:correct };
+  } else {
+    // PGK rubric: 2 = seluruh benar tanpa yang salah; 1 = sebagian benar (1-2 opsi benar, maks 1 salah); 0 = lainnya
+    if(chosen.length===0) return { skor:0, maks:2, benar:false };
+    const salahDipilih = chosen.filter(c=>!kunci.includes(c)).length;
+    const benarDipilih = chosen.filter(c=>kunci.includes(c)).length;
+    if(salahDipilih===0 && benarDipilih===kunci.length) return { skor:2, maks:2, benar:true };
+    if(salahDipilih<=1 && benarDipilih>=1) return { skor:1, maks:2, benar:false };
+    return { skor:0, maks:2, benar:false };
+  }
+}
+
+function submitExam(autoSubmit){
+  if(state.submitted) return;
+  state.submitted = true;
+  clearInterval(state.timerHandle);
+  clearInterval(watermarkHandle);
+  document.getElementById("app").classList.remove("exam-blurred");
+  document.getElementById("blurOverlay").classList.remove("show");
+
+  let totalSkor=0, totalMaks=0, fullCorrect=0;
+  const recap = [];
+  state.sessionQuestions.forEach((q, idx)=>{
+    const r = scoreQuestion(q);
+    totalSkor += r.skor; totalMaks += r.maks;
+    if(r.benar) fullCorrect++;
+    const chosen = (state.answers[q.no]||[]).join(", ") || "(kosong)";
+    const kunci = Array.isArray(q.kunci) ? q.kunci.join(", ") : q.kunci;
+    recap.push({no:q.no, urutanTampil:idx+1, tipe:q.tipe, jawaban:chosen, kunci:kunci, skor:r.skor, maks:r.maks});
+  });
+  const nilaiAkhir = Math.round((totalSkor/totalMaks)*1000)/10;
+
+  state.result = { totalSkor, totalMaks, nilaiAkhir, fullCorrect, recap };
+
+  document.getElementById("screen-exam").classList.remove("active");
+  document.getElementById("screen-result").classList.add("active");
+  document.getElementById("lockscreen").classList.remove("show");
+  if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+
+  document.getElementById("finalScore").textContent = nilaiAkhir;
+  document.getElementById("rawScore").textContent = totalSkor;
+  document.getElementById("fullCorrect").textContent = fullCorrect;
+  document.getElementById("tabSwitchCount").textContent = state.tabSwitchCount;
+  document.getElementById("screenshotCount").textContent = state.screenshotAttemptCount;
+
+  const pred = predikat(nilaiAkhir);
+  document.getElementById("predikatBox").innerHTML = `<span class="predikat" style="background:${pred.color};color:#fff;">${pred.label}</span>`;
+
+  const table = document.getElementById("recapTable");
+  let html = "<tr><th>No Soal</th><th>Tipe</th><th>Jawaban Peserta</th><th>Kunci</th><th>Skor</th></tr>";
+  recap.sort((a,b)=>a.no-b.no).forEach(r=>{
+    html += `<tr><td>${r.no}</td><td>${r.tipe}</td><td>${r.jawaban}</td><td>${r.kunci}</td><td>${r.skor}/${r.maks}</td></tr>`;
+  });
+  table.innerHTML = html;
+
+  if(autoSubmit) alert("Waktu pengerjaan telah habis. Jawaban dikumpulkan secara otomatis.");
+
+  sendResultsToSheet();
+}
+
+// ---------- KIRIM OTOMATIS KE GOOGLE SHEETS ----------
+function sendResultsToSheet(){
+  const statusBox = document.getElementById("sheetStatus");
+  if(!SHEET_WEBHOOK_URL){
+    statusBox.textContent = "Pengiriman otomatis ke spreadsheet belum diaktifkan. Unduh hasil Excel dan kirimkan ke guru secara manual.";
+    return;
+  }
+  statusBox.textContent = "Mengirim hasil ke spreadsheet guru ...";
+  const payload = {
+    nama: state.nama,
+    kelas: state.kelas,
+    nilaiAkhir: state.result.nilaiAkhir,
+    totalSkor: state.result.totalSkor,
+    totalMaks: state.result.totalMaks,
+    tabSwitchCount: state.tabSwitchCount,
+    screenshotAttemptCount: state.screenshotAttemptCount,
+    fullscreenExitCount: state.fullscreenExitCount,
+    recap: state.result.recap.slice().sort((a,b)=>a.no-b.no)
+  };
+  fetch(SHEET_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }, // hindari CORS preflight
+    body: JSON.stringify(payload)
+  }).then(res=>{
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return res.json().catch(()=>({status:"ok"})); // toleran jika respons bukan JSON murni
+  }).then(json=>{
+    if(json && json.status === "error") throw new Error(json.message || "Gagal di server");
+    statusBox.textContent = "✓ Hasil terkirim dan tercatat di spreadsheet guru.";
+  }).catch((err)=>{
+    console.error(err);
+    statusBox.textContent = "⚠ Gagal mengirim otomatis ke spreadsheet (periksa URL webhook / koneksi internet). Silakan unduh hasil Excel dan kirimkan secara manual.";
+  });
+}
+
+function predikat(n){
+  if(n>=90) return {label:"Sangat Baik", color:"#1E7A46"};
+  if(n>=75) return {label:"Baik", color:"#2E6DA4"};
+  if(n>=60) return {label:"Cukup", color:"#C9A24B"};
+  return {label:"Perlu Bimbingan", color:"#B3261E"};
+}
+
+// ---------- EXCEL EXPORT (SheetJS) ----------
+function downloadExcel(){
+  const r = state.result;
+  const rows = [["Nama","Kelas","No Soal","Tipe Soal","Jawaban Peserta","Kunci Jawaban","Skor Butir","Skor Maksimal Butir","Skor Total","Skor Maksimal Total","Nilai Akhir","Jumlah Perpindahan Tab","Dugaan Percobaan Screenshot"]];
+  r.recap.slice().sort((a,b)=>a.no-b.no).forEach(item=>{
+    rows.push([state.nama, state.kelas, item.no, item.tipe, item.jawaban, item.kunci, item.skor, item.maks,
+      r.totalSkor, r.totalMaks, r.nilaiAkhir, state.tabSwitchCount, state.screenshotAttemptCount]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{wch:20},{wch:8},{wch:8},{wch:10},{wch:16},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:14},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Hasil Asesmen");
+  const filename = `Hasil_Asesmen_${state.nama.replace(/\\s+/g,"_")}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+</script>
+</body>
+</html>
